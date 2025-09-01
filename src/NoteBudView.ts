@@ -30,7 +30,6 @@ export class NoteBudView extends ItemView {
 		container.createEl('h4', { text: 'NoteBud' });
 		const button = container.createEl('button', {text: 'Find Connections'});
 		button.onClickEvent(async () => {
-			console.log("hello 1");
 			const file = this.workspace.getActiveFile();
 			if (file) {
 				const contents = await this.app.vault.cachedRead(file);
@@ -49,8 +48,7 @@ export class NoteBudView extends ItemView {
 				
 				try {
 					const result = await this.connectionGenerator.generateConnections(contents);
-					console.log("done");
-					console.log("Result:", result);
+					console.debug("Result:", result);
 					// Remove loading message
 					loadingEl.remove();
 					
@@ -58,19 +56,19 @@ export class NoteBudView extends ItemView {
 					const resultEl = container.createDiv({cls: "is-clickable"})
 					// Create Editorial section
 					if (result.editorial && result.editorial.length > 0) {
-						console.log("Creating editorial section with", result.editorial.length, "items");
+						console.debug("Creating editorial section with", result.editorial.length, "items");
 						const editorialEl = resultEl.createEl('h1', {text: 'Editorial'});
 						const editorialList = resultEl.createEl('ul');
 						result.editorial.forEach(suggestion => {
 							editorialList.createEl('li', {text: suggestion});
 						});
 					} else {
-						console.log("No editorial suggestions found");
+						console.debug("No editorial suggestions found");
 					}
 					
 					// Create Connections section
 					if (result.connections && result.connections.length > 0) {
-						console.log("Creating connections section with", result.connections.length, "items");
+						console.debug("Creating connections section with", result.connections.length, "items");
 						const connectionEl = resultEl.createEl('h1', {text: 'Connections'});
 						const connectionsList = resultEl.createEl('ul');
 						result.connections.forEach(connection => {
@@ -88,14 +86,8 @@ export class NoteBudView extends ItemView {
 							});
 						});
 					} else {
-						console.log("No connections found");
+						console.debug("No connections found");
 					}
-					
-					
-					// // Show message if no results found
-					// if (chunks.length === 0) {
-					// 	container.createEl('p', {text: 'No similar content found'});
-					// }
 				} catch (error) {
 					// Remove loading message and show error
 					loadingEl.remove();
@@ -111,12 +103,11 @@ export class NoteBudView extends ItemView {
 	}
 
 	navigateTo(name: string){
-		console.log(name);
+		console.debug(name);
 		name = name.split('-')[0]
-		console.log("again", name)
 		const firstLink=this.app.metadataCache.getFirstLinkpathDest(name, '');
-		console.log("firstLink", this.app.metadataCache.getFirstLinkpathDest(name, ''))
-		console.log("secondLink", this.app.metadataCache.getFirstLinkpathDest('', name))
+		console.debug("firstLink", this.app.metadataCache.getFirstLinkpathDest(name, ''))
+		console.debug("secondLink", this.app.metadataCache.getFirstLinkpathDest('', name))
 
 		if(firstLink){
 			this.app.workspace.openLinkText(firstLink.name, firstLink.path);
@@ -128,15 +119,6 @@ export class NoteBudView extends ItemView {
 			this.app.workspace.openLinkText(secondLink.name, secondLink.path);
 			return
 		}
-
-		name = 'Commonplace/Blogs/Database index Blog.md'
-		const link=this.app.metadataCache.getFirstLinkpathDest(name, '');
-		console.log("new", link)
-		if(link){
-			this.app.workspace.openLinkText(link.name, link.path);
-			return;
-		}
-
 	}
 
 	async onClose() {

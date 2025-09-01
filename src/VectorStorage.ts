@@ -32,14 +32,14 @@ export class VectorStorage {
 
     async search(text: string, count=10) {
         const embeddings = await this.createEmbeddingsWithDelay(text);
-        console.log("done creating embeddings");
+        console.debug("done creating embeddings");
         // Search for similar documents using each embedding and combine results
         const allResults = [];
         for (const embedding of embeddings) {
             const results = await this.storage.similaritySearchVectorWithScore(embedding, count);
             allResults.push(...results);
         }
-        console.log("finished searching");
+        console.debug("finished searching");
         
         // Sort by similarity score and remove duplicates
         const uniqueResults = new Map();
@@ -84,7 +84,7 @@ export class VectorStorage {
         
         const chunks = await textSplitter.splitText(text);
 
-        console.log("done splitting text into ${chunks.length} chunks", chunks.length);
+        console.debug("done splitting text into ${chunks.length} chunks", chunks.length);
         
         // Helper function to add delay
         const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -93,7 +93,7 @@ export class VectorStorage {
         const embeddings = [];
         for (let i = 0; i < chunks.length; i++) {
             const chunk = chunks[i];
-            console.log("creating embedding for chunk", i, "of", chunks.length);
+            console.debug("creating embedding for chunk", i, "of", chunks.length);
             
             // Create a timeout promise that rejects after 15 seconds
             const timeoutPromise = new Promise((_, reject) => {
@@ -112,10 +112,10 @@ export class VectorStorage {
             if (embedding.length > 0) {
                 embeddings.push(embedding);
             }
-            console.log("done creating embedding for chunk", i);
+            console.debug("done creating embedding for chunk", i);
             // wait 16 seconds for the next chunk
             if (i < chunks.length - 1) {
-                console.log("sleeping", i, chunk.length - 1)
+                console.debug("sleeping", i, chunk.length - 1)
                 await sleep(16 * 1000);
             }
         }

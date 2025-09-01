@@ -116,9 +116,7 @@ export class LLMConnectionPrompter {
             ["system", SYSTEM_MESSAGE],
             ["user", '{{"document": "{{ {document} }}", "sources": [ {sources} ]}}']
         ]);
-
-        console.log("Sources received:", sources);
-        console.log("Number of sources:", sources.length);
+        console.debug("Number of sources:", sources.length);
         
         if (sources.length === 0) {
             console.warn("No sources found, returning empty result");

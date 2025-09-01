@@ -12,10 +12,9 @@ export class ConnectionGenerator {
     }
 
     async generateConnections(contents: string) {
-        console.log("Searching for chunks...");
+        console.debug("Searching for chunks...");
         const chunks = await this.vectorStorage.search(contents, 10);
-        console.log("Chunks found:", chunks);
-        console.log("Number of chunks:", chunks.length);
+        console.debug("Number of chunks:", chunks.length);
         
         if (chunks.length === 0) {
             console.warn("No chunks found from vector search");
