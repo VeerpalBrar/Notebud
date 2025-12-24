@@ -1,0 +1,10 @@
+{
+	"id": "notebud",
+	"name": "NoteBud",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "An LLM-based plugin that helps you find connections between your notes using AI-powered analysis.",
+	"author": "Veerpal Brar",
+	"authorUrl": "https://github.com/VeerpalBrar",
+	"isDesktopOnly": false
+}

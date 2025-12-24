@@ -1,0 +1,29 @@
+# vscode
+.vscode 
+
+# Intellij
+*.iml
+.idea
+
+# npm
+node_modules
+
+# Don't include the compiled main.js file in the repo.
+# They should be uploaded to GitHub releases instead.
+main.js
+
+# Exclude sourcemaps
+*.map
+
+# obsidian
+data.json
+
+# Data folder (for embeddings and other plugin data)
+data/
+
+# Environment files (for API keys)
+.env
+env.example
+
+# Exclude macOS Finder (System Explorer) View States
+.DS_Store
