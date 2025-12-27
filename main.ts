@@ -15,9 +15,6 @@ export default class NoteBud extends Plugin {
 	async onload() {
 		await this.loadSettings();
 		
-		// Check for environment variables and update settings if found
-		this.updateSettingsFromEnvironment();
-
 		this.vectorStore = new VectorStorage(this.app, this, this.settings);
 		this.llmConnectionPrompter = new LLMConnectionPrompter(this.app, this, this.settings);
 		this.connectionGenerator = new ConnectionGenerator(this.vectorStore, this.llmConnectionPrompter, this.app);
@@ -61,35 +58,6 @@ export default class NoteBud extends Plugin {
 	reinitializeServices(): void {
 		this.vectorStore.initializeEmbeddings(this.settings);
 		this.llmConnectionPrompter.initializeLLM(this.settings);
-	}
-
-	getApiKey(): string {
-		// First try to get from settings
-		if (this.settings.apiKey) {
-			return this.settings.apiKey;
-		}
-		
-		// Then try environment variable
-		if (typeof process !== 'undefined' && process.env && process.env.GITHUB_API_KEY) {
-			return process.env.GITHUB_API_KEY;
-		}
-		
-		// For browser environments, try to get from window object
-		if (typeof window !== 'undefined' && (window as any).GITHUB_API_KEY) {
-			return (window as any).GITHUB_API_KEY;
-		}
-		
-		return '';
-	}
-
-	updateSettingsFromEnvironment() {		
-		const apiKey = this.getApiKey();
-		if (apiKey) {
-			this.settings.apiKey = apiKey;
-			this.saveSettings();
-		} else {
-			console.warn('GitHub API key not found. Please set it in settings or via GITHUB_API_KEY environment variable.');
-		}
 	}
 
 	async activateView() {
