@@ -1,6 +1,7 @@
 import { App, ItemView, WorkspaceLeaf, Workspace, TFile } from 'obsidian';
 import { ConnectionGenerator } from './ConnectionGenerator';
 import { ConnectionOutput } from './types';
+import NoteBud from 'main';
 
 export const VIEW_NOTEBUD = 'notebud-chat';
 
@@ -16,16 +17,19 @@ const UI_TEXT = {
 	sectionEditorial: 'Editorial',
 	sectionConnections: 'Connections',
 	connectionSourcePrefix: 'Source: ',
+	apiKeyNotSet: 'Please configure the API key in the plugin settings to use this feature.',
 } as const;
 
 export class NoteBudView extends ItemView {
 	private connectionGenerator: ConnectionGenerator;
 	private workspace: Workspace;
+	private plugin: NoteBud;
 
-	constructor(leaf: WorkspaceLeaf, connectionGenerator: ConnectionGenerator, app: App) {
+	constructor(leaf: WorkspaceLeaf, connectionGenerator: ConnectionGenerator, app: App, plugin: NoteBud) {
 		super(leaf);
 		this.connectionGenerator = connectionGenerator;
 		this.workspace = app.workspace;
+		this.plugin = plugin;
 	}
 
 	getViewType(): string {
@@ -54,6 +58,14 @@ export class NoteBudView extends ItemView {
 		container.createEl('h4', { text: UI_TEXT.title });
 		
 		const button = container.createEl('button', { text: UI_TEXT.button });
+		
+		// Check if API key is set
+		if (!this.plugin.settings.apiKey) {
+			container.createEl('p', { text: UI_TEXT.apiKeyNotSet });
+			button.disabled = true;
+			return;
+		}
+		
 		button.onClickEvent(() => this.handleFindConnections(container));
 	}
 

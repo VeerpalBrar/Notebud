@@ -21,8 +21,8 @@ type SearchResult = [Document, number];
 export class VectorStorage {
     private plugin: NoteBud;
     private app: App;
-    private storage: MemoryVectorStore;
-    private embeddings: OpenAIEmbeddings;
+    private storage: MemoryVectorStore | null = null;
+    private embeddings: OpenAIEmbeddings | null = null;
     private index: Set<string>;
     private readonly embeddingsPath: string;
     private textSplitter: RecursiveCharacterTextSplitter;
@@ -30,17 +30,6 @@ export class VectorStorage {
     constructor(app: App, plugin: NoteBud, settings: NoteBud['settings']) {
         this.plugin = plugin;
         this.app = app;
-
-        this.embeddings = new OpenAIEmbeddings({
-            modelName: settings.embeddingModel,
-            openAIApiKey: settings.apiKey,
-            configuration: {
-                baseURL: settings.modelUrl,
-                dangerouslyAllowBrowser: true
-            }
-        });
-        
-        this.storage = new MemoryVectorStore(this.embeddings);
         this.index = new Set();
         
         this.textSplitter = new RecursiveCharacterTextSplitter({
@@ -53,7 +42,32 @@ export class VectorStorage {
         const pluginId = this.plugin.manifest.id;
         this.embeddingsPath = `.obsidian/plugins/${pluginId}/data/embeddings.json`;
 
-        this.load();
+        // Initialize embeddings and storage with error handling
+        this.initializeEmbeddings(settings);
+    }
+
+    /**
+     * Initializes the embeddings and storage with error handling to prevent plugin load failures
+     */
+    initializeEmbeddings(settings: NoteBud['settings']): void {
+        try {
+            this.embeddings = new OpenAIEmbeddings({
+                modelName: settings.embeddingModel,
+                openAIApiKey: settings.apiKey,
+                configuration: {
+                    baseURL: settings.modelUrl,
+                    dangerouslyAllowBrowser: true
+                }
+            });
+            
+            this.storage = new MemoryVectorStore(this.embeddings);
+            this.load();
+        } catch (error) {
+            console.warn('[VectorStorage] Failed to initialize embeddings:', error);
+            this.embeddings = null;
+            this.storage = null;
+        }
+
     }
 
     /**
@@ -63,6 +77,11 @@ export class VectorStorage {
      * @returns Array of matching chunks
      */
     async search(text: string, count: number = 10): Promise<ChunkData[]> {
+        if (!this.embeddings) {
+            console.error("[search] Storage is not initialized. Please configure the API key in settings.");
+            return [];
+        }
+
         const embeddings = await this.createEmbeddingsWithDelayForSearchText(text);
         console.debug(`[search] Created ${embeddings.length} embeddings`);
         
@@ -81,6 +100,10 @@ export class VectorStorage {
         embeddings: number[][],
         count: number
     ): Promise<SearchResult[]> {
+        if (!this.storage) {
+            return [];
+        }
+
         const allResults: SearchResult[] = [];
         
         for (const embedding of embeddings) {
@@ -131,6 +154,11 @@ export class VectorStorage {
      * Saves all embeddings from memory to disk
      */
     async saveEmbeddings(): Promise<void> {
+        if (!this.storage) {
+            console.warn("[saveEmbeddings] Storage is not initialized. Skipping save.");
+            return;
+        }
+
         try {
             const chunks = this.extractChunksFromStorage();
             const jsonData = JSON.stringify(chunks, null, 2);
@@ -147,6 +175,10 @@ export class VectorStorage {
      * Extracts and validates chunks from the memory vector store
      */
     private extractChunksFromStorage(): ChunkData[] {
+        if (!this.storage) {
+            return [];
+        }
+
         return this.storage.memoryVectors
             .filter(this.isValidMemoryVector)
             .map((mv) => ({
@@ -174,6 +206,11 @@ export class VectorStorage {
      * Loads embeddings from disk into memory
      */
     async load(): Promise<void> {
+        if (!this.storage) {
+            console.warn("[load] Storage is not initialized. Skipping load.");
+            return;
+        }
+
         try {
             if (!(await this.embeddingsFileExists())) {
                 console.log("Embeddings file not found, starting with empty storage");
@@ -197,8 +234,10 @@ export class VectorStorage {
             this.handleLoadError(error);
         }
         
-        // Index all files in the vault after loading completes
-        await this.indexFiles();
+        // Index all files in the vault after loading completes (only if storage is initialized)
+        if (this.storage) {
+            await this.indexFiles();
+        }
     }
 
     /**
@@ -333,6 +372,11 @@ export class VectorStorage {
      * Creates an embedding for a single chunk with timeout protection
      */
     async createEmbeddingForChunk(chunk: string): Promise<number[]> {
+        if (!this.embeddings) {
+            console.error("[createEmbeddingForChunk] Embeddings is not initialized. Please configure the API key in settings.");
+            return [];
+        }
+
         const timeoutPromise = this.createTimeoutPromise(
             EMBEDDING_CONFIG.EMBEDDING_TIMEOUT_MS,
             'Embedding request timed out'
@@ -429,6 +473,11 @@ export class VectorStorage {
      * Removes vectors from storage that match the given IDs
      */
     private removeVectorsFromStorage(idsToRemove: string[]): void {
+        if (!this.storage) {
+            console.warn("[removeVectorsFromStorage] Storage is not initialized. Skipping removal.");
+            return;
+        }
+
         const beforeCount = this.storage.memoryVectors.length;
         
         this.storage.memoryVectors = this.storage.memoryVectors.filter((mv) => {
@@ -491,6 +540,11 @@ export class VectorStorage {
         embedding: number[],
         index: number
     ): Promise<void> {
+        if (!this.storage) {
+            console.warn("[addChunkToStorage] Storage is not initialized. Skipping add.");
+            return;
+        }
+
         const id = `${basename}-${index}`;
         const document: Document = {
             pageContent: chunk,

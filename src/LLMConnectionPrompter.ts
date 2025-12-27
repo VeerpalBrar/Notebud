@@ -88,7 +88,7 @@ You must provide feedback in two forms:
 export class LLMConnectionPrompter {
     plugin: NoteBud;
     app: App;
-    private llm: ChatOpenAI;
+    private llm: ChatOpenAI | null = null;
 
 
     constructor(app: App, plugin: NoteBud, settings: NoteBud['settings']) {
@@ -96,18 +96,39 @@ export class LLMConnectionPrompter {
         this.app = app;
         
         // Initialize the LLM with the same configuration as VectorStorage
-        this.llm = new ChatOpenAI({
-            modelName: settings.llmModel,
-            temperature: 0.3,
-            openAIApiKey: settings.apiKey,
-            configuration: {
-                baseURL: settings.modelUrl,
-                dangerouslyAllowBrowser: true
-            }
-        });
+        this.initializeLLM(settings);
+    }
+
+    /**
+     * Initializes the LLM with error handling to prevent plugin load failures
+     */
+    initializeLLM(settings: NoteBud['settings']): void {
+        try {
+            this.llm = new ChatOpenAI({
+                modelName: settings.llmModel,
+                temperature: 0.3,
+                openAIApiKey: settings.apiKey,
+                configuration: {
+                    baseURL: settings.modelUrl,
+                    dangerouslyAllowBrowser: true
+                }
+            });
+        } catch (error) {
+            console.warn('[LLMConnectionPrompter] Failed to initialize LLM:', error);
+            this.llm = null;
+        }
     }
 
     async generateConnections(fileContent: string, sources: ChunkData[]): Promise<ConnectionOutput> {
+        // Check if LLM is initialized
+        if (!this.llm) {
+            console.error("[generateConnections] LLM is not initialized. Please configure the API key in settings.");
+            return {
+                editorial: [],
+                connections: []
+            };
+        }
+
         // Set up the JSON output parser
         console.debug("[generateConnections] Generating connections")
         const parser = new JsonOutputParser<ConnectionOutput>();

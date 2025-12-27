@@ -3,10 +3,12 @@ import { NoteBudSettings, DEFAULT_SETTINGS } from './types';
 
 export class SettingTab extends PluginSettingTab {
 	plugin: any; // Using any to avoid circular dependency
+	private settingsUpdatedCallback?: () => void;
 
-	constructor(app: App, plugin: any) {
+	constructor(app: App, plugin: any, settingsUpdatedCallback?: () => void) {
 		super(app, plugin);
 		this.plugin = plugin;
+		this.settingsUpdatedCallback = settingsUpdatedCallback;
 	}
 
 	display(): void {
@@ -23,6 +25,7 @@ export class SettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.plugin.settings.apiKey = value;
 					await this.plugin.saveSettings();
+					this.settingsUpdatedCallback?.();
 				}));
 
 		new Setting(containerEl)
@@ -34,6 +37,7 @@ export class SettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.plugin.settings.embeddingModel = value;
 					await this.plugin.saveSettings();
+					this.settingsUpdatedCallback?.();
 				}));
 
 		new Setting(containerEl)
@@ -45,6 +49,7 @@ export class SettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.plugin.settings.llmModel = value;
 					await this.plugin.saveSettings();
+					this.settingsUpdatedCallback?.();
 				}));
 
 		new Setting(containerEl)
@@ -56,6 +61,7 @@ export class SettingTab extends PluginSettingTab {
 				.onChange(async (value) => {
 					this.plugin.settings.modelUrl = value;
 					await this.plugin.saveSettings();
+					this.settingsUpdatedCallback?.();
 				}));
 	}
 }

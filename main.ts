@@ -1,4 +1,4 @@
-import { App, Plugin, WorkspaceLeaf } from 'obsidian';
+import { App, Plugin, WorkspaceLeaf, TFile } from 'obsidian';
 import { VectorStorage } from 'src/VectorStorage';
 import { LLMConnectionPrompter } from 'src/LLMConnectionPrompter';
 import { ConnectionGenerator } from 'src/ConnectionGenerator';
@@ -18,25 +18,21 @@ export default class NoteBud extends Plugin {
 		// Check for environment variables and update settings if found
 		this.updateSettingsFromEnvironment();
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SettingTab(this.app, this));
-		
 		this.vectorStore = new VectorStorage(this.app, this, this.settings);
 		this.llmConnectionPrompter = new LLMConnectionPrompter(this.app, this, this.settings);
 		this.connectionGenerator = new ConnectionGenerator(this.vectorStore, this.llmConnectionPrompter, this.app);
 
+		// This adds a settings tab so the user can configure various aspects of the plugin
+		this.addSettingTab(new SettingTab(this.app, this, () => this.reinitializeServices()));
 
 		this.registerView(
 			VIEW_NOTEBUD,
-			(leaf) => new NoteBudView(leaf, this.connectionGenerator, this.app)
+			(leaf) => new NoteBudView(leaf, this.connectionGenerator, this.app, this)
 		  );
 	  
 		  this.addRibbonIcon('scroll', 'Find connections in your notes with NoteBud', () => {
 			this.activateView();
 		  });
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SettingTab(this.app, this));
 
 		this.registerEvent(this.app.vault.on('modify', this.onFileModify, this));
 		this.registerInterval(
@@ -57,6 +53,14 @@ export default class NoteBud extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	/**
+	 * Reinitializes VectorStorage and LLMConnectionPrompter with updated settings
+	 */
+	reinitializeServices(): void {
+		this.vectorStore.initializeEmbeddings(this.settings);
+		this.llmConnectionPrompter.initializeLLM(this.settings);
 	}
 
 	getApiKey(): string {
