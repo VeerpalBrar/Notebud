@@ -51,7 +51,7 @@ export class NoteBudView extends ItemView {
 	/**
 	 * Renders the initial view with the title and find connections button
 	 */
-	private renderInitialView(): void {
+	renderInitialView(): void {
 		const container = this.contentEl;
 		container.empty();
 		
@@ -60,7 +60,7 @@ export class NoteBudView extends ItemView {
 		const button = container.createEl('button', { text: UI_TEXT.button });
 		
 		// Check if API key is set
-		if (!this.plugin.settings.apiKey) {
+		if (!this.plugin.settings.apiKey.trim()) {
 			container.createEl('p', { text: UI_TEXT.apiKeyNotSet });
 			button.disabled = true;
 			return;
@@ -105,7 +105,7 @@ export class NoteBudView extends ItemView {
 	 * Renders the connection results
 	 */
 	private renderResults(container: HTMLElement, result: ConnectionOutput): void {
-		const resultEl = container.createDiv({ cls: 'is-clickable' });
+		const resultEl = container.createDiv({ cls: 'notebud-results' });
 		
 		this.renderEditorialSection(resultEl, result.editorial);
 		this.renderConnectionsSection(resultEl, result.connections);
@@ -176,7 +176,7 @@ export class NoteBudView extends ItemView {
 	 * Extracts the source name from a source ID (removes suffix after hyphen)
 	 */
 	private extractSourceName(sourceId: string): string {
-		return sourceId.split('-')[0];
+		return sourceId.substring(0, sourceId.lastIndexOf('-'));
 	}
 
 	/**

@@ -47,7 +47,7 @@ This plugin requires a GitHub API key to access GitHub AI models.
 
 - Performs a similarity search to find the 10 most semantically related document chunks
 
-= Passes the open file and the retrieved document chunks to an LLM
+- Passes the open file and the retrieved document chunks to an LLM
 
 - Prompts the LLM to identify three meaningful connections between the open file and the related documents
 
