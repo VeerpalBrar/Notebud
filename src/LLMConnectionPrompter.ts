@@ -103,6 +103,10 @@ export class LLMConnectionPrompter {
      * Initializes the LLM with error handling to prevent plugin load failures
      */
     initializeLLM(settings: NoteBud['settings']): void {
+        if (!settings.apiKey.trim()) {
+            this.llm = null;
+            return;
+        }
         try {
             this.llm = new ChatOpenAI({
                 modelName: settings.llmModel,

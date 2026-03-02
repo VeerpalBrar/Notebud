@@ -50,6 +50,11 @@ export class VectorStorage {
      * Initializes the embeddings and storage with error handling to prevent plugin load failures
      */
     initializeEmbeddings(settings: NoteBud['settings']): void {
+        if (!settings.apiKey.trim()) {
+            this.embeddings = null;
+            this.storage = null;
+            return;
+        }
         try {
             this.embeddings = new OpenAIEmbeddings({
                 modelName: settings.embeddingModel,

@@ -1,4 +1,4 @@
-import { App, Plugin, WorkspaceLeaf, TFile } from 'obsidian';
+import { App, Plugin, WorkspaceLeaf, TFile, Notice } from 'obsidian';
 import { VectorStorage } from 'src/VectorStorage';
 import { LLMConnectionPrompter } from 'src/LLMConnectionPrompter';
 import { ConnectionGenerator } from 'src/ConnectionGenerator';
@@ -14,7 +14,11 @@ export default class NoteBud extends Plugin {
 
 	async onload() {
 		await this.loadSettings();
-		
+
+		if (!this.settings.apiKey.trim()) {
+			new Notice('NoteBud: No API key set. Please configure it in plugin settings.');
+		}
+
 		this.vectorStore = new VectorStorage(this.app, this, this.settings);
 		this.llmConnectionPrompter = new LLMConnectionPrompter(this.app, this, this.settings);
 		this.connectionGenerator = new ConnectionGenerator(this.vectorStore, this.llmConnectionPrompter, this.app);
@@ -58,6 +62,10 @@ export default class NoteBud extends Plugin {
 	reinitializeServices(): void {
 		this.vectorStore.initializeEmbeddings(this.settings);
 		this.llmConnectionPrompter.initializeLLM(this.settings);
+
+		this.app.workspace.getLeavesOfType(VIEW_NOTEBUD).forEach(leaf => {
+			(leaf.view as NoteBudView).renderInitialView();
+		});
 	}
 
 	async activateView() {
